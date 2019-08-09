@@ -96,6 +96,7 @@ func (handler *Handler) DomainLoop(domain *godns.Domain, panicChan chan<- godns.
 				// update records
 				for _, rec := range records {
 					if !recordTracked(domain, &rec) {
+						log.Println("domain:", rec.Name)
 						log.Println("Skiping record:", rec.Name)
 						continue
 					}
@@ -128,7 +129,24 @@ func (handler *Handler) DomainLoop(domain *godns.Domain, panicChan chan<- godns.
 func recordTracked(domain *godns.Domain, record *DNSRecord) bool {
 	for _, subDomain := range domain.SubDomains {
 		sd := fmt.Sprintf("%s.%s", subDomain, domain.DomainName)
-		if record.Name == sd {
+
+		log.Println("record Name:", record.Name)
+		log.Println("sub Domain:", sd)
+
+		// 匹配主域名+子域名
+		// "sub_domains": ["*"]
+		if sd == "*."+domain.DomainName {
+			return true
+		}
+
+		// 匹配主域名
+		// "sub_domains": ["@"]
+		if sd == "@."+record.Name {
+			return true
+		}
+
+		// 匹配子域名
+		if sd == record.Name {
 			return true
 		}
 	}
